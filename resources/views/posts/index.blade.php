@@ -20,7 +20,7 @@
 		</form>
 
 		@empty
-			<p>data not found</p>
+			<p>No blog posts yet!</p>
 
 	@endforelse
 @endsection

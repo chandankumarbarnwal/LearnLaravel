@@ -24,8 +24,10 @@ LARAVEL CHEAT SHEET
    9. php artisan make:model BlogPost -m =>create BlogPost model and blog_posts migration also
 
    10. php artisan make:request StorePost => for form Requests means custom class validation
+   
+   11. 
 
-
+   12. 
 
 
 -------------------------------------------------------------------------------------------------------------
@@ -51,12 +53,48 @@ Laravel Mix provides a fluent API for defining webpack build steps for your appl
 
 5. To include css =>  <link rel="stylesheet" type="text/css" href="{{ mix('css/app.css') }}">
 
+--------------------------------------------------------------------------------------------------------------
+
+GITHUB
+
+Clone or download project folder from github
+
+1. run command composer install => to include all the composer package file
+
+2. npm install => to include all the npm packages
+
+3. create .env file in main folder and copy all .env.example and change database and password
+
+
+--------------------------------------------------------------------------------------------------------------
+LARAVEL TEST
+
+1. To make sure  that application works as expected. To Check all module is working fine. Beacuse when  application grows then it will be dificult to verify all module.
+
+2. types of test:
+
+    i. unit tests: to testing small isolated part of our code/application like one class or one method functionality.
+
+    ii. feature tests  : For testing specific feature of our application. It might be to test BlogPost is saved when we are sending correct data and if we see the flash message that bolgpost was created successfully.
+
+    often it is involed to check http requests when running our application
+
+3. Typical test consists 3 parts:
+
+  ex: $object = new BlogPost(); => arrange
+      $object->save(); => act
+      $this->assertTrue(); => assert
+
+
+    1. Arrange: => its optional. Where we arrange data.test set up, like creating an object to be tested or mocks
+
+    2. Act: => Where we do something, we perform some task. execute the objects created in the Arrange step
+
+    3. assert: => Where we verify our completed task. check and verify the result from the Act step against expected results
 
 
 
-
-
-
+4. to execute test run command => .vendor/bin/phpunit
 
 
 
