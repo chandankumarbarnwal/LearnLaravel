@@ -1,0 +1,217 @@
+LARAVEL CHEAT SHEET
+   https://github.com/piotr-jura-udemy/laravel-cheat-sheet/blob/master/0026-assets.md
+
+-------------------------------------------------------------------------------------------------------
+
+   ARTISAN COMMAND
+
+   1. php artisan serve => to run laravel project
+
+   2. php artisan route:list => to get the list of route of both(api.php and web.php)
+
+   3. php artisan make:controller HomeController => to create controller 
+
+   4. php artisan migrate => to make database table migration
+
+   5. php artisan make:migration create_blogposts_table => to create table migration 
+
+   6. php artisan migrate:refresh
+
+   7. php artisan migrate:rollback
+
+   8. php artisan make:model BlogPost => create BlogPost model only
+
+   9. php artisan make:model BlogPost -m =>create BlogPost model and blog_posts migration also
+
+   10. php artisan make:request StorePost => for form Requests means custom class validation
+   
+   11. php artisan make:test BlogTest => to create test file for testing purpose
+
+   12. php artisan tinker
+
+
+-------------------------------------------------------------------------------------------------------------
+
+Working with webpack:
+
+
+Laravel Mix provides a fluent API for defining webpack build steps for your application using several common CSS and JavaScript pre-processors.
+
+
+1.  npm install =>to include all the libraries of version available in package.json
+
+2.  npm run dev => 1.  which run the script availabe inside package.json
+                  
+                   2. To run your Mix tasks you only need to execute one of the NPM scripts 
+                     that is included with the default Laravel package.json file
+
+                   3. When we do change anything in css or js file then to execute these file
+
+3.  npm run watch => to see the current changes.                  
+
+4. To include js => <script type="text/javascript" src="{{  mix('js/app.js') }}"></script>
+
+5. To include css =>  <link rel="stylesheet" type="text/css" href="{{ mix('css/app.css') }}">
+
+--------------------------------------------------------------------------------------------------------------
+
+GITHUB
+
+Clone or download project folder from github
+
+1. run command composer install => to include all the composer package file
+
+2. npm install => to include all the npm packages
+
+3. create .env file in main folder and copy all .env.example and change database and password
+
+
+--------------------------------------------------------------------------------------------------------------
+LARAVEL TEST
+
+1. To make sure  that application works as expected. To Check all module is working fine. Beacuse when  application grows then it will be dificult to verify all module.
+
+2. types of test:
+
+    i. unit tests: to testing small isolated part of our code/application like one class or one method functionality.
+
+    ii. feature tests  : For testing specific feature of our application. It might be to test BlogPost is saved when we are sending correct data and if we see the flash message that bolgpost was created successfully.
+
+    often it is involed to check http requests when running our application
+
+3. Typical test consists 3 parts:
+
+  ex: $object = new BlogPost(); => arrange
+      $object->save(); => act
+      $this->assertTrue(); => assert
+
+
+    1. Arrange: => its optional. Where we arrange data.test set up, like creating an object to be tested or mocks
+
+    2. Act: => Where we do something, we perform some task. execute the objects created in the Arrange step
+
+    3. assert: => Where we verify our completed task. check and verify the result from the Act step against expected results
+
+
+
+4. to execute test run command => .vendor/bin/phpunit
+
+
+-----------------------------------------------------------------------------------------------------
+  ONE TO ONE RELATIONSHIP
+
+  Parent 
+
+    class Author extends Model
+{
+    public function profile()
+    {
+        // can not contain profile_id beacuse without author profile can't exist
+           return $this->hasOne('App\Profile'); 
+    }
+}
+
+child 
+
+class Profile extends Model
+{
+    public function author()
+    {
+      return $this->belongsTo('App\Author');  // contain author_id
+    }
+}
+
+
+
+SAVE DATA
+
+Using AUTHOR:
+
+$author = App\Author:;create();
+$profile = new App\Profile;
+$author->profile()->save($profile);
+
+$author = App\Author:;create();
+$profile = new App\Profile;
+$profile()->author()->associate($author)->save();
+
+
+-----------------------------------------------------------------------------------------
+
+LAZY LOADING VS EAGER LOADING
+
+  Lazy loading => Dynamic properties are "lazy loading", meaning they will only load their relationship data when we actually access them.
+
+   Because of this, developers often use eager loading to pre-load relationships they know will be accessed after loading the model. Eager loading provides a significant reduction in SQL queries that must be executed to load a model's relation
+
+
+    $profiles = Profile::all(); // "select * from `profiles`" // query 1
+
+
+
+
+foreach ($profiles as $profile) {
+    echo $profile->author->author_id; // select * from `authors` where `authors`.`id`= $profile->id //query 5// executing once for each id
+}
+
+
+//TOTAL QUERY RUN 6
+  $profile = App\Profile::find(2);
+
+  $profile->author
+
+  Eager Loading: => When accessing Eloquent relationships as properties, the relationship data is "lazy loaded". 
+
+When accessing Eloquent relationships as properties, the relationship data is "lazy loaded". This means the relationship data is not actually loaded until you first access the property. However, Eloquent can "eager load" relationships at the time you query the parent model. Eager loading alleviates the N + 1 query problem. To illustrate the N + 1 query problem, consider a Book model that is related to Author:
+
+
+
+$profiles = Profile::with(['author'])->get();
+First execute : "select * from `profiles`"  // 1 query
+
+Get all id then execute with all id at once 
+
+ "select * from `authors` where `authors`.`id` in (1, 2, 5, 6, 7)" // 1query total 2 query
+
+
+foreach ($profiles as $profile) {
+    echo $profile->author->author_id; 
+}
+
+=================================================================================================
+ RELATED TO MODEL FUNCTION
+
+1. calling function parameters
+
+class Comment extends Model
+{
+    public function blogPost()
+    {
+
+      //Here comment table related with blogPost table.
+      //calling blogpost model from comment model
+      //When calling blogPost model then need to specify,
+      // column name of comment table(blog_post_id) is related with the column name of blog post table(id)
+      // If it same as laravel convention then no need to write column name
+      return $this->belongsTo('App\BlogPost', 'blog_post_id => of comment table', 'id => of blog_posts table');
+
+    }
+}
+
+
+2. function name convention
+
+  function name blogPost  => Because related column/foreign name is blog_post_id, so by default laravel will look funtion blogPost and it convert to blog_post and suffix _id. Means first look funtion table name and with suffix id 
+=================================================================================================
+
+function name used:
+1. saveMany([$c1, $c2]) => To save more then one object related values
+      $bp = BlogPost::find(2);
+      $c1 = new comment;
+      $c1->content = 'c1 content';
+       $c2 = new comment;
+      $c2->content = 'c2 content ';
+      $bp->comment()->saveMany([$c1, $c2]);
+
+
+
