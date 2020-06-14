@@ -34,3 +34,4 @@ Route::resource('posts', 'PostController');
 
 		// ->only(['index', 'show', 'create','store']);
 
+Route::get('check', 'CheckController@test');

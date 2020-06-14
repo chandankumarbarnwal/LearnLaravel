@@ -16,7 +16,10 @@ class PostController extends Controller
      */
     public function index()
     {
-        return view('posts.index',['posts' => BlogPost::all()]);
+        return view('posts.index',['posts' => BlogPost::withCount('comment')->get()]);
+
+        // return view('posts.index',['posts' => BlogPost::all()]);
+
     }
 
     /**
@@ -64,7 +67,7 @@ class PostController extends Controller
     {
         // $request->session()->reflash();
        
-        return view('posts.show',['post' => BlogPost::findOrFail($id)]);
+        return view('posts.show',['post' => BlogPost::with('comment')->findOrFail($id)]);
     }
 
     /**
