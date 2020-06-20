@@ -9,14 +9,19 @@ use App\Http\Requests\StorePost;
 
 class PostController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function __construct()
+    {
+        $this->middleware('auth')
+             ->only(['create', 'store', 'edit', 'update', 'destroy']);
+    }    
+
+
     public function index()
     {
-        return view('posts.index',['posts' => BlogPost::all()]);
+        return view('posts.index',['posts' => BlogPost::withCount('comment')->get()]);
+
+        // return view('posts.index',['posts' => BlogPost::all()]);
+
     }
 
     /**
@@ -52,7 +57,7 @@ class PostController extends Controller
         // return redirect('posts'); // to redirect in url
         return redirect()->route('posts.show', ['post' => $blogPost->id]);
 
-    }
+    } 
 
     /**
      * Display the specified resource.
@@ -64,7 +69,7 @@ class PostController extends Controller
     {
         // $request->session()->reflash();
        
-        return view('posts.show',['post' => BlogPost::findOrFail($id)]);
+        return view('posts.show',['post' => BlogPost::with('comment')->findOrFail($id)]);
     }
 
     /**

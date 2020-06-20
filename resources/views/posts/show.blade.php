@@ -16,5 +16,14 @@
 				<strong>{{(new carbon\carbon)->diffInMinutes($post->created_at)}} minutes as New!</strong>
 			@endif
 
+	<h4>Comments</h4>
+
+	@forelse($post->comment as $cmt)
+			<p>{{$cmt->content}},</p>
+			<p class="text-muted">Added {{$cmt->created_at->diffForHumans()}}</p>
+
+		@empty
+			<p>No comments yet!</p>
+	@endforelse
 
 @endsection
