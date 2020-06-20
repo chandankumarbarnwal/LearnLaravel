@@ -18,14 +18,10 @@
 
 // Route::view('/', 'HomeController@home')->name('home');
 
+Route::get('/', 'HomeController@home')
+->name('home');
+// ->middleware('auth');
 
-
-// Route::get('/contact', function () {
-
-//     return view('contact');
-// });
- 
-Route::get('/', 'HomeController@home')->name('home');
 
 Route::get('contact', 'HomeController@contact')->name('contact');
 
@@ -34,3 +30,4 @@ Route::resource('posts', 'PostController');
 
 		// ->only(['index', 'show', 'create','store']);
 
+Auth::routes();
