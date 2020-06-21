@@ -1,0 +1,4 @@
+1. pluck(['id']) => To fetch specific column from databse.
+
+
+

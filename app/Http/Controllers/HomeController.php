@@ -3,12 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
 
 	public function home()
     {
+		// dd(Auth::id());// get id
+		// dd(Auth::check());//check user
+		// dd(Auth::guest());//check guest
+		// dd(Auth::user()->name);// user details
+
+
     	return view('home');
     }
 
