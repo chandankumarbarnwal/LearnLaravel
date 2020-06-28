@@ -18,19 +18,39 @@
 
 // Route::view('/', 'HomeController@home')->name('home');
 
+Route::get('/', 'HomeController@home')
+->name('home');
+// ->middleware('auth');
 
-
-// Route::get('/contact', function () {
-
-//     return view('contact');
-// });
- 
-Route::get('/', 'HomeController@home')->name('home');
 
 Route::get('contact', 'HomeController@contact')->name('contact');
+Route::get('secret', 'HomeController@secret')
+	->name('secret')->middleware('can:home.secret');
+
 
 Route::resource('posts', 'PostController');
 	// ->except('destroy');
 
 		// ->only(['index', 'show', 'create','store']);
+
+Auth::routes();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

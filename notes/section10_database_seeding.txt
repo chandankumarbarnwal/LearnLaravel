@@ -1,0 +1,28 @@
+1. SEED:  Laravel includes a simple method of seeding your database with test data using seed classes. 
+
+2. execute to perform seeding:  php artisan db:seed
+
+3.  Regenarate table with seed flag =>  php artisan migrate:refresh --seed
+
+4. To create new seeder class:  php artisan make:seeder CommentsTableSeeder
+
+5. composer dump-autoload (vendor/composer/autoload_classmap.php)=>
+	
+		This file is regenerated on each dump-autoload. If you have a new class somewhere in your project it will not be loaded unless it is included in autoload_classmap (hence you have to execute composer dump-autoload)
+
+6.  php artisan db:seed --class=UsersTableSeeder => to seed single file
+
+7. When we do seeding then interact with users: we can use this type method
+
+        if($this->command->confirm('Do you want to refresh database')){
+            $this->command->call('migrate:refresh');
+            $this->command->info('Database refreshed');
+        }
+
+        $usersCount = max((int)$this->command->ask('How many users would you like?', 20),1);
+
+When we execute db:seed then will confirm from user and display appropriate msg.
+
+If we don't want to interact with with user then use "-n" flag
+
+php artisan db:seed -n

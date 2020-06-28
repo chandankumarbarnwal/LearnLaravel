@@ -3,20 +3,46 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\BlogPost;
 use App\Http\Requests\StorePost;
+use Illuminate\Support\Facades\Auth;
+use App\BlogPost;
+use App\User;
 
+use Illuminate\Support\Facades\Gate;
+
+/*
+ Controller Method => Policy Method
+        index      => viewAny
+        show       => view
+        create     => create
+        store      => create
+        edit       =>  update
+        update     => update
+        destroy    => delete
+*/
 
 class PostController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function __construct()
+    {
+        $this->middleware('auth')
+             ->only(['create', 'store', 'edit', 'update', 'destroy']);
+    }    
+
+
     public function index()
     {
-        return view('posts.index',['posts' => BlogPost::all()]);
+
+        return view('posts.index',[
+            'posts' => BlogPost::latest()->withCount('comment')->get(),
+            'mostCommented' => BlogPost::mostCommented()->take(5)->get(),
+            'mostActive' => User::withMostBlogPosts()->take(5)->get(),
+            'mostActiveLastMonth' => User::withMostBlogPostsLastMonth()->take(5)->get(),
+             // 'posts' => BlogPost::withCount('comment')->orderBy('created_at', 'desc')->get()
+        ]);
+
+        // return view('posts.index',['posts' => BlogPost::all()]);
+
     }
 
     /**
@@ -26,6 +52,7 @@ class PostController extends Controller
      */
     public function create()
     {
+        // $this->authorize('posts.create');
         return view('posts.create');
     }
 
@@ -39,9 +66,12 @@ class PostController extends Controller
     {
         $validatedData = $request->validated();
 
+        // $validatedData['user_id'] = Auth::user()->id; //provide authorize user id
+        $validatedData['user_id'] = $request->user()->id; //provide user id from authorize method
+
         $blogPost = BlogPost::create($validatedData);
 
-
+ 
         // $blogPost = new BlogPost;
         // $blogPost->title = $request->input('title');
         // $blogPost->content = $request->input('content');
@@ -52,7 +82,7 @@ class PostController extends Controller
         // return redirect('posts'); // to redirect in url
         return redirect()->route('posts.show', ['post' => $blogPost->id]);
 
-    }
+    } 
 
     /**
      * Display the specified resource.
@@ -63,8 +93,12 @@ class PostController extends Controller
     public function show(Request $request, $id)
     {
         // $request->session()->reflash();
-       
-        return view('posts.show',['post' => BlogPost::findOrFail($id)]);
+        return view('posts.show',['post' => BlogPost::with('comment')->findOrFail($id)]);
+        
+         // return view('posts.show',['post' => BlogPost::with(['comment' => function($query){
+        //     return $query->latest();
+        // }])->findOrFail($id)]);
+
     }
 
     /**
@@ -75,7 +109,17 @@ class PostController extends Controller
      */
     public function edit($id)
     {
-        return view('posts.edit', ['post' => BlogPost::findOrFail($id)]);
+        $post =  BlogPost::findOrFail($id);
+
+        // if(Gate::denies('update-post', $post)){
+        //     abort(403, "You can't edit this blog post!");// this is dynamically will show http response and msg
+        // }
+        $this->authorize($post);
+
+        // Gate::authorize('posts.update', $post); // this is static , by deafult will show http response and msg
+
+
+        return view('posts.edit', ['post' => $post]);
     }
 
     /**
@@ -88,6 +132,15 @@ class PostController extends Controller
     public function update(StorePost $request, $id)
     {
         $blogPost = BlogPost::findOrFail($id);
+
+        // if(Gate::denies('update-post',$blogPost)){
+        //     abort(403, "You can't edit this blog post!");
+        // }
+
+        // Gate::authorize('update-post', $blogPost); // usig authorize helper
+        // $this->authorize('posts.update', $blogPost);
+        $this->authorize($blogPost);
+
         $validatedData = $request->validated();
         $blogPost->fill($validatedData);
         $blogPost->save();
@@ -104,10 +157,18 @@ class PostController extends Controller
      */
     public function destroy(Request $request, $id)
     {
-        // $blogPost = BlogPost::findOrFail($id);
+
+        $blogPost = BlogPost::findOrFail($id);
+           // $this->authorize('delete-post', $blogPost);
+
+        // $this->authorize('posts.delete', $blogPost);
+        $this->authorize($blogPost);
+        // Gate::authorize('delete-post', $blogPost);
         // $blogPost->delete();
 
         BlogPost::destroy($id);
+
+
 
         $request->session()->flash('status',  'Blog post was deleted!');
         return redirect()->route('posts.index');
