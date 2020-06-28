@@ -1,0 +1,70 @@
+
+ --SECTION-8 MODEL FACTORIES 
+
+1. Laravel has a feature called model factories that allows us to build fake data for our models. 
+    It is very useful for testing and seeding fake data into our database to see our code in action before any real user data comes in.
+
+
+2. php artisan make:factory CommentFactory --model=Comment
+ 					 => create model factory inside database/factories folder.
+
+3. to execute factory model 
+		
+		 // Create a single App\User instance
+		factory(App\Comment::class)->create();
+
+		//Specify additional parameters in create method
+		factory(App\Comment::class)->create(['blog_post_id'=>2]);
+ 					 
+		// Create 3 App\User instance
+		factory(App\Comment::class,3)->create(['blog_post_id'=>2]);
+
+4. state : To create fake data for our model, but here we can give our own specific data,
+			that data will override the fake generated data at the  time of creation.
+
+
+			$factory->state(App\BlogPost::class, 'new-title', function (Faker $faker) {
+
+				return [
+					'title' => 'New title'
+				];
+			});
+
+			factory(App\BlogPost::class,2)->states('new-title')->create();
+					 
+5. make() :  to generate modal data only. not to save in database. making a model. 
+				model instance is created.
+
+6. create(): to generate modal data and save in database. creating a model.
+				 Model instance is created and saved.
+
+7. Factory callbacks are registered using the afterMaking and afterCreating methods,
+	and allow you to perform additional tasks after making or creating a model.
+	For example, you may use callbacks to relate additional models to the created model:
+
+// call afterauthor instance is created and saved.
+$faker->afterCreating(Author::class, function ($author, $faker){
+	$author->profile()->save(factory(Profile::class)->make());
+});
+
+//call afterauthor instace is created
+$factory->afterMaking(Author::class, function ($author, $faker){
+	$author->profile()->save(factory(Profile::class)->make());
+});
+
+
+---------------------------------------------------------------------------------------------
+
+Add foreign key
+
+ $table->unsignedBigInteger('user_id')->nullable();
+            $table->foreign('user_id')->references('id')->on('users');
+
+
+
+
+
+
+
+
+            

@@ -1,0 +1,34 @@
+--SECTION 9 AUTHENTICATION
+
+
+Authentication is the process of identifying the user credentials. In web applications, authentication is managed by sessions which take the input parameters such as email or username and password, for user identification. If these parameters match, the user is said to be authenticated.
+
+Authentication means user is a part of some application. user have credientials. 
+User can login and see the data.
+
+
+1. install authentication:
+	php artisan make:auth => to create authentication forlder(auth, passwords) and file inside view folder
+
+2. It will ask to replace home.blade.php and homecontroller, if its created already.
+
+3. MIDDLEWARE : constructor is a place, where we can register middleware.
+	claas in middleware folder can do something for us before the request or after the request.
+
+	middleware class are registered inside kernal.php with same or different name.
+
+4. To get all the routes of authentication, include in web.php
+		Auth::routes();
+
+5. create auth folder inside views folder. And in auth folder create register.blade.php	loggin.blade,php	
+
+6. 'password' => ['required', 'string', 'min:8', 'confirmed'],
+
+		input field name= password
+		and other for confirming password is name= password_confirmation
+		write password validate type = confirmed
+
+7. 	'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+		unique:table_name will check in DB for same data,If found then will generate error.
+
+		

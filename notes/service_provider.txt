@@ -1,0 +1,6 @@
+Service Provider:
+
+ Provider classes are the places where we setup some specific logic. 
+		That is about some part of our application. EX: AuthServiceProvider is about authentication and authorization.
+
+Service providers are the central place of all Laravel application bootstrapping. Your own application, as well as all of Laravel's core services are bootstrapped via service providers.
