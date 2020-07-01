@@ -1,0 +1,10 @@
+1. MIDDLEWARE : constructor is a place, where we can register middleware.
+	claas in middleware folder can do something for us before the request or after the request.
+
+	middleware class are registered inside kernal.php with same or different name.
+
+2. Ways to register middleware:
+		1. inside route.php =>  ->middleware('auth/middleware_name')	
+		2. inside controller class => $this->middleware('auth/middleware_name');
+		3. $this->middleware('auth/middleware_name')->only(['function_name']);;
+		4. $this->middleware('auth/middleware_name')->except(['function_name']);;

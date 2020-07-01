@@ -1,0 +1,140 @@
+	--Query Scopes--
+	2 Types of Query scopes
+
+1. Global Scopes
+
+	Global scopes allow you to add constraints to all queries for a given model. 
+
+	Writing your own global scopes can provide a convenient, easy way to make sure every query for a given model receives certain constraints.
+
+	Illuminate\Database\Eloquent\Scope interface.
+
+	This interface requires you to implement one method: apply. 
+	The apply method may add where constraints to the query as needed:
+
+2. write global scope 
+	<?php
+
+	namespace App\Scopes;
+
+	use Illuminate\Database\Eloquent\Builder;
+	use Illuminate\Database\Eloquent\Model;
+	use Illuminate\Database\Eloquent\Scope;
+
+	class LatestScope implements Scope
+	{
+	    /**
+	     * Apply the scope to a given Eloquent query builder.
+	     *
+	     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+	     * @param  \Illuminate\Database\Eloquent\Model  $model
+	     * @return void
+	     */
+	    public function apply(Builder $builder, Model $model)
+	    {
+	        $builder->orderBy($model::CREATED_AT, 'desc');
+	    }
+	}
+
+
+
+	Anonymous:
+
+	protected static function booted()
+    {
+        static::addGlobalScope('age', function (Builder $builder) {
+            $builder->where('age', '>', 200);
+        });
+    }
+
+
+3. To use global scope  in model
+
+ public static function boot(){
+    	parent::boot();
+
+    	static::addGlobalScope(new latestScope);
+    }
+
+
+
+4. Using global scope
+	ONLY_FULL_GROUP_BY => will give you error if, enabled.
+	Because, using Count and orderBy without groupBy then will get error.
+
+5. We can use global scope for admin to show all blogpost that one deleted also
+
+	public function apply(Builder $builder, Model $model)
+    {
+        if(Auth::check() && Auth::user()->is_admin){
+            //$builder->withTrashed();
+            $builder->withoutGlobalScope('Illuminate\Database\Eloquent\SoftDeletingScope');
+        }
+    }
+
+    generally used to remove global scope 
+
+    $builder->withoutGlobalScope('Illuminate\Database\Eloquent\SoftDeletingScope');
+
+
+6. Local scope.
+
+Local scopes allow you to define common sets of constraints that you may easily re-use throughout your application. 
+To define a scope, prefix an Eloquent model method with scope.
+
+Scopes should always return a query builder instance:
+
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class BlogPost extends Model
+{
+    public function scopeLates(Builder $query)
+    {
+        return $query->orderBy(static::CREATED_AT, 'desc');
+    }
+}
+
+Utilizing A Local Scope
+Not include the scope prefix when calling the method.(latest() only)
+
+return view('posts.index',[
+            'posts' => BlogPost::latest()->withCount('comment')->get()
+             // 'posts' => BlogPost::withCount('comment')->orderBy('created_at', 'desc')->get()
+        ]);
+
+Don't do:
+return view('posts.show',['post' => BlogPost::with('comment')->latest()->findOrFail($id)]);
+
+return view('posts.show',['post' => BlogPost::latest()->with('comment')->findOrFail($id)]);
+
+Because we are fetching all comments of specific blogpost id
+So, we need to apply to comments not to blogpost.
+
+7. Use inner query:
+
+ return view('posts.show',['post' => BlogPost::with(['comment' => function($query){
+            return $query->latest();
+        }])->findOrFail($id)]);
+
+return $query->withCount(['blogPosts' => function(Builder $query){
+            $query->whereBetween(static::CREATED_AT, [now()->subMonths(1), now()]);
+        }])->having('blog_posts_count', '>=', 2)->orderBy('blog_posts_count', 'desc');
+  
+
+        or:
+        We can call latest method, at the time of fetchimg
+        return $this->hasMany('App\Comment')->latest();
+
+
+
+
+
+
+
+
+
+

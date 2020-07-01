@@ -1,0 +1,121 @@
+1. Deleting parent then should be deleted all child refrence also
+	Using boot deleting event
+
+	class BlogPost extends Model
+	{
+	    // protected $table = 'blogposts';
+
+	    protected $fillable = ['title', 'content'];
+
+	    public function comment()
+	    {
+	    	return $this->hasMany('App\Comment');
+	    }
+
+	    public static function boot() // boot statis method
+	    {
+	    	parent::boot();
+	    	static::deleting(function (BlogPost $blogPost){  //deleting event
+	    		$blogPost->comment()->delete();
+	    	});
+	    }
+	}
+
+2.  Using cascade can delete child reference, when we delete parent
+
+		$table->dropForeign(['blog_post_id']);
+        
+        $table->foreign('blog_post_id')->references('id')->on('blog_posts')
+                ->onDelete('cascade');
+
+3.  Actually removing records from database is not good pratice,
+	Eloquent can also "soft delete" models. When models are soft deleted, 
+	they are not actually removed from database. 
+	Instead, a "deleted_at" attribute is set on the model and inserted into the database.
+	If a model has a non-null "deleted_at" value, the model has been soft deleted. 
+	To enable soft deletes for a model, use the 
+
+	Illuminate\Database\Eloquent\SoftDeletes 
+
+	trait on the model.
+
+	 use SoftDeletes;
+
+	Like this:			use Illuminate\Database\Eloquent\SoftDeletes ;
+
+				class BlogPost extends Model
+				{
+				    use SoftDeletes;
+
+	create migration for SoftSeletes like this:			    
+
+	Schema::table('blog_posts', function (Blueprint $table) {
+            $table->softDeletes();
+        });
+    }
+
+	Schema::table('blog_posts', function (Blueprint $table) {
+        $table->dropSoftDEletes();
+    });
+
+    After deleting deleting timestamp will be set to deleted_at column and this will not be diplayed to users.
+
+4. Method used:
+
+	1. trashed : To determine if a given model instance has been soft deleted.
+	
+
+		$p=BlogPost::withTrashed()->get();
+
+		$a = $p->find(5); 
+
+		$a->trashed(); //result in true/false
+
+	2. withTrashed :
+
+		Including Soft Deleted Models
+		As noted above, soft deleted models will automatically be excluded from query results. However, you may force soft deleted models to appear in a result set using the withTrashed method on the query:
+
+		BlogPost::withTrashed()->get()->pluck(['id']);
+
+		The withTrashed method may also be used on a relationship query:
+
+		BlogPost::withTrashed()->where('id',1)->get();
+
+
+	3. onlyTrashed :
+		Retrieving Only Soft Deleted Models
+		The onlyTrashed method will retrieve only soft deleted models:
+		
+		BlogPost::onlyTrashed()->get()->pluck(['id']);;
+
+		BlogPost::onlyTrashed()->where('id', 4)->get()->pluck(['id']);;
+
+	
+	4. restore :
+		Restoring Soft Deleted Models
+		Sometimes you may wish to "un-delete" a soft deleted model. To restore a soft deleted model into an active state, use the restore method on a model instance:
+
+		 $b= BlogPost::withTrashed()->get();
+		 $f= $b->find(1);
+		  $f->trashed(); // true/false
+		 $f->restore();
+
+		 To restore relation model write restore event in parent model, so if parent model is deleted then child model also.
+
+		static::restoring(function (BlogPost $blogPost){
+            $blogPost->comment()->restore();
+        });
+
+
+	5. forceDelete	: 
+			
+		Permanently Deleting Models
+		Sometimes you may need to truly remove a model from your database. To permanently remove a soft deleted model from the database, use the forceDelete method:
+
+
+		 $b= BlogPost::withTrashed()->get();
+		 $f= $b->find(1);
+		 $f->forceDelete();
+
+
