@@ -5,16 +5,34 @@
 @endsection
 
 @section('content')
-			<h3>{{ $post->title }}</h3>
+			<h1>
+				{{ $post->title }}
+					@badge(['show' => now()->diffInMinutes($post->created_at) <30])
+						Brand new Post!
+					@endbadge
+			</h1>
+
 			<h3>{{ $post->content }}</h3>
 
-			<!-- <p>Added {{$post->created_at}}</p> -->
+			@updated(['date' => $post->created_at, 'name' => $post->user->name])
+			@endupdated
 
-			<p>Added {{$post->created_at->diffForHumans()}}</p>
+			@updated(['date' => $post->created_at])
+				Updated
+			@endupdated
 
-			@if( (new carbon\carbon)->diffInMinutes($post->created_at) <5)
-				<strong>{{(new carbon\carbon)->diffInMinutes($post->created_at)}} minutes as New!</strong>
-			@endif
+			<p>Currently read by {{$counter}} people</p>
 
+	<h4>Comments</h4>
+
+	@forelse($post->comment as $cmt)
+			<p>{{$cmt->content}},</p>
+
+			@updated(['date' => $post->created_at])
+			@endupdated
+
+		@empty
+			<p>No comments yet!</p>
+	@endforelse
 
 @endsection
