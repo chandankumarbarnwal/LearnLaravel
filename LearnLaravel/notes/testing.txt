@@ -1,0 +1,25 @@
+1. The Use of session is for maintaining user state, such as the authenticated user. The "actingAs" helper   	    maintaining method provides a simple way to authenticate a given user as the current user.
+	   For example, we may use a model factory to generate and authenticate a user:
+
+
+		abstract class TestCase extends BaseTestCase
+		{
+			use CreatesApplication;
+
+			public function user()
+			{
+				return factory(User::class)->create();
+			}
+		}
+
+
+		
+        $this->actingAs($this->user())
+                ->post('/posts', $params)
+                ->assertStatus(302)
+                ->assertSessionHas('status');
+
+
+2. $this->assertSoftDeleted('table_name', "array of table column");
+
+	To check data is deleted using soft deleted method                

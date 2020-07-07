@@ -1,0 +1,106 @@
+  
+
+  Table1: blog_posts
+
+
+
+  Table2: tags
+
+    relation table: blog_post_tag (firsttable _ secondTable) Dont use plural here, 
+    here we are not createing model of this corresponding table
+  Table3 : blog_post_tag 
+
+            contain  of blog_post_id, and tag_id (So we relate blogpost to tag, or tag to blogpost)
+            One blogpost contain many tag, one tag contain many blogpost
+
+1. attach : To add data in intermediate table
+		$blogPost->tags()->attach([$tag1->id, $tag2->id]);
+
+
+2. sync : Current data will be in model/table and insert into table remaining will be deleted
+	>>> $blogPost->tags()->sync([$tag2->id]); only create tag1, remaining delete
+	$blogPost->tags()->sync([$tag2->id, $tag1->id]); only create tag1,tag2
+
+
+
+	To insert with time stamp 
+	    public function tags()
+    {
+        return $this->belongsToMany('App\Tag')->withTimestamps();
+    }
+
+    public function blogPosts()
+    {
+        return $this->belongsToMany('App\BlogPost')->withTimestamps();
+    }
+
+    will get pivot properties as common
+    And can changed this properties name by as('name')
+
+            return $this->belongsToMany('App\Tag')->withTimestamps()->as('tagged');
+
+
+
+3. syncWithDetaching : it will check first if data is not in model then will add.
+>>> $blogPost->tags()->syncWithoutDetaching([$tag1->id, $tag2->id, $tag3->id]);
+
+
+4. detach : to deleted the data
+			delete 1 data
+		$blogPost->tags()->detach([$tag->id]);
+
+		delete all data
+	    $blogPost->tags()->detach([$tag->id]);
+5. pivot is intermediate between both table
+>>> $blogPost = $blogPost->tags;
+
+   id: 1,
+         name: "artist",
+         created_at: "2020-07-05 07:51:25",
+         updated_at: "2020-07-05 07:51:25",
+         pivot: Illuminate\Database\Eloquent\Relations\Pivot {#3971
+           blog_post_id: 1,
+           tag_id: 1,
+           created_at: "2020-07-05 10:22:54",
+           updated_at: "2020-07-05 10:22:54",
+         },
+       },
+
+ >>> $blogPost[0]->pivot
+=> Illuminate\Database\Eloquent\Relations\Pivot {#3971
+     blog_post_id: 1,
+     tag_id: 1,
+     created_at: "2020-07-05 10:22:54",
+     updated_at: "2020-07-05 10:22:54",
+   }
+   
+>>> $blogPost[0]->pivot->created_at
+=> Illuminate\Support\Carbon @1593944574 {#3981
+     date: 2020-07-05 10:22:54.0 UTC (+00:00),
+   }
+>>> 
+
+6. To read blogpost using tag id
+
+$tag = App\Tag::find(2);
+
+=> App\Tag {#3935
+     id: 2,
+     name: "sports",
+     created_at: "2020-07-05 07:52:02",
+     updated_at: "2020-07-05 07:52:02",
+   }
+
+>>> $tag = App\Tag::find(1);
+=> App\Tag {#3946
+     id: 1,
+     name: "artist",
+     created_at: "2020-07-05 07:51:25",
+     updated_at: "2020-07-05 07:51:25",
+   }
+
+>>> $posts = $tag->blogPosts;
+
+      
+
+

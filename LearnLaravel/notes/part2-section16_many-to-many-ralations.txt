@@ -1,0 +1,47 @@
+1. View composers:
+
+	It is a callbacks or class methods that are called when a view is rendered. 
+	If you have data that you want to be bound to a view each time that view is rendered, a view composer organizes that logic into a single location.
+
+	Means we can create or fetch data and send data to multiple view, using one logic
+	1. create folder App\Http\ViewComposer
+	2. create file 
+
+		class ActivityComposer
+		{
+		    public function compose(View $view)
+		    {
+		    	
+		    	$mostCommented = Cache::tags(['blog-post'])->remember('blog-post-commented', 160, function(){
+		            return BlogPost::mostCommented()->take(5)->get();
+		        });
+
+		         $mostActive = Cache::remember('users-most-active', 160, function(){
+		            return User::withMostBlogPosts()->take(5)->get();
+		        });
+
+		          $mostActiveLastMonth = Cache::remember('users-most-active-last-month', 160, function(){
+		            return User::withMostBlogPostsLastMonth()->take(5)->get();
+		        });
+
+
+		        $view->with('mostCommented', $mostCommented);
+		        $view->with('mostActive', $mostActive);
+		        $view->with('mostActiveLastMonth', $mostActiveLastMonth);
+
+		    }
+		}
+
+	3. include composer file into 
+
+		class AppServiceProvider extends ServiceProvider
+		{
+		   
+		    public function boot()
+		    {
+		        view()->composer('posts.index', ActivityComposer::class);
+	            view()->composer(['posts.index', 'posts.show'], ActivityComposer::class);
+		    }
+		}
+
+		now whenever posts.index will render then data will be displayed
