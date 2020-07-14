@@ -29,12 +29,15 @@
 
 			<p>Currently read by {{$counter}} people</p>
 
-	<h4>Comments</h4>
+	<h4>Comments</h4>@include('comments._form')
+
+	
+
 
 	@forelse($post->comment as $cmt)
 			<p>{{$cmt->content}},</p>
 
-			@updated(['date' => $post->created_at])
+			@updated(['date' => $post->created_at, 'name' => $cmt->user->name])
 			@endupdated
 
 		@empty

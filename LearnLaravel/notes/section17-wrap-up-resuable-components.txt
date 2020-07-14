@@ -1,0 +1,21 @@
+1.  
+	Route::resource('posts', 'PostController');
+
+	Route::resource('posts.comments', 'PostCommentController')->only(['store']);
+
+	NESTED WAY to declare : 'posts.comments' here need to pass post id that is related to comment
+
+	URL name : posts.comments.store
+
+	url posts/{post_id}/comment
+
+	Related nested way to fetch relation.
+
+  return BlogPost::with('comment')
+            ->with('tags')->with('comment.user') //comment user only of particular post
+            ->findOrFail($id);
+
+
+
+
+

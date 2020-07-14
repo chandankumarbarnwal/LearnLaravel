@@ -27,14 +27,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Blade::component('components.badge', 'badge');
-
         Blade::component('components.updated', 'updated');
-
         Blade::component('components.card', 'card');
-        
         Blade::component('components.tags', 'tags');
+        Blade::component('components.errors', 'errors');
 
         view()->composer(['posts.index', 'posts.show'], ActivityComposer::class);
-
     }
 }
