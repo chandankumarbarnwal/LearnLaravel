@@ -1,0 +1,178 @@
+1. To install debugger
+
+	composer require barryvdh/laravel-debugbar --dev
+
+	APP_DEBUGG is automatically set to true in .env file during developement.
+
+	Here, we can get to know how many views , quesries and models, gates are loading in specific url.
+
+	It execute 2 queries. with blogpost it fetch users also
+
+	'posts' => BlogPost::latest()->withCount('comment')->with('user')->get(),
+
+		it takes 79 queries to execute. here not fetching user, But after this one one fetching user details thats why
+
+	'posts' => BlogPost::latest()->withCount('comment')->get(),
+
+
+	2. Gates is executing 200 times 
+			If not authenticated then no nedd to execute this line
+
+	 		@if(!$post->trashed())
+				@can('delete', $post)
+					<form  class="fm-inline" action="{{ route('posts.destroy', ['id' =>$post->id])}}" method="POST">
+						
+						@csrf
+						@method('DELETE')
+
+						<input type="submit" name="" value="Delete" class="btn btn-primary">
+					</form>
+				@endcan	
+			@endif	
+
+
+2. @auth, @endauth => if user is authentication then only elements inside this directive can render
+
+
+So make authe directive
+		@auth
+	 		@if(!$post->trashed())
+				@can('delete', $post)
+					<form  class="fm-inline" action="{{ route('posts.destroy', ['id' =>$post->id])}}" method="POST">
+						
+						@csrf
+						@method('DELETE')
+
+						<input type="submit" name="" value="Delete" class="btn btn-primary">
+					</form>
+				@endcan	
+			@endif
+		@endauth	
+
+
+
+--  CACHE--
+
+Cache :  Cache is memory placed between user_file/Controller and database(Eloquent/Model).
+			Laravel tells to use the file cache driver which stores cached object in the filesysytem.
+			Laravel recommended robust drivers are Memcached or Redis.
+
+			
+
+1. 	Cache::remember :When we want to retrieve all users from the cache or, if they don't exist, 
+					Retrieve them from the database and add them to the cache.
+
+
+					include : use Illuminate\Support\Facades\Cache;
+
+  $mostCommented = Cache::remember('mostCommented', 10, function(){
+            return BlogPost::mostCommented()->take(5)->get();
+        });
+
+        return view('posts.index',[
+            'posts' => BlogPost::latest()->withCount('comment')->with('user')->get(),
+            'mostCommented' => $mostCommented,
+            'mostActive' => User::withMostBlogPosts()->take(5)->get(),
+            'mostActiveLastMonth' => User::withMostBlogPostsLastMonth()->take(5)->get(),
+        ]);
+
+
+
+2. Cache::forget('key') : To remove items from the cache using the forget method:
+
+			Cache::forget('key'); 
+			In model:       
+			 static::updating(function (BlogPost $blogPost) {
+			            Cache::forget("blog-post-{$blogposts->id}");
+			        });
+
+3. Cache::put: To store values in key
+	Cache::put('data', 'hi chandan', 15);
+
+4. Cache::has('data'): To check key exist
+	Cache::has('data');
+
+5. Cache::get('key'): To get data
+
+		Cache::get('data');
+
+		During fetching data, we can give optional data
+		Cache::get('data','kumar');
+		"kumar"
+6. Cache::increment(): To increment value 
+		Cache::increment('counter');
+			1
+		2nd Arg indicating the amount to be increment
+		Cache::increment('counter',5);
+
+7. Cache::decrement(): To decrement value 
+		Cache::decerement('counter');
+			1
+		2nd Arg indicating the amount to be decrement
+		Cache::decrement('counter',5);		
+
+
+8. Caching can be implemented by file or memory
+	Using file: Easy to implement but a bit slower then memory. If deleted cache folder then caching data can not get back.
+	Using memory: Bit faster then file.
+		use memcached or redis can be faster then the storing the data in disk or ssd.
+
+
+9. Redis: To use:
+		1. go to redislabs.com
+		2. register and activate link
+		3. select free, click create subscription , write subscription name
+		4. create database name.
+		5. after some time acount will get activate
+		6. EndPoint copy and paste in env file named REDIS_HOST
+		7. Redis Password copy and paste in env file named REDIS_PASSWORD
+
+10. To use redis cache with laravel need to install predis/predis package.
+			composer require predis/predis
+11. Change file to redis in .env file
+
+		CACHE_DRIVER=file
+		CACHE_DRIVER=redis
+		REDIS_CACHE_DB=0
+
+
+## CACHE TAGS => 
+
+	Cache tags are not supported when using file, database.
+	Only supported with memcached and redis.
+
+	1. Cache::tags : Allow to tag related items in the Cache, and then flush all Cached values ,
+			that you have been assigned a given tag.
+
+	Cache::tags(['people','author'])->put('ane', 'hi ane', 40);
+	Cache::tags(['people','artist'])->put('john', 'hi john', 40);
+
+	Cache::tags(['artist'])->flush();
+
+ Cache::tags(['people','author'])->get('ane')
+=> "hi ane"
+>>> Cache::tags(['people','artist'])->get('john')
+=> null
+>>> Cache::tags(['people','author'])->get('ane')
+=> "hi ane"
+
+
+
+We put items in tags, so that whenever we want to get rid off and delete all cache data that time we can flush all related tags data.
+
+Such as we created new blogpost and comments but already exist most commented data in cache is coming then we can flush all data related to tags, then generate data using seed. So during database refresh,flush ralated cache tags.
+
+
+
+	Write in DatabaseSeeder
+		        Cache::tags('blog-post')->flush();
+	So, this Delete all cache data related to blog-post tags.		        
+
+
+
+
+
+
+
+
+

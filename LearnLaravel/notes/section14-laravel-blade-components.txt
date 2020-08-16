@@ -1,0 +1,44 @@
+1.	Blade: it is a templating engine in laravel that allows us to use plain php code also.
+
+	Component: Creating a blade component once means that we can reuse the code anywhere in our application
+			it follows DRY(DO NOT REPEAT YOURSELF)
+
+			Components are a reusable group of elements. 
+
+2. 
+
+	If your Blade components are stored in a sub-directory "components", you may wish to alias them for easier access. For example, imagine a Blade component that is stored at resources/views/components/alert.blade.php. You may use the component method to alias the component from components.alert to alert. Typically, this should be done in the boot method of your AppServiceProvider:
+	AppServiceProvider:
+		Where we can register components in boot methos.
+
+	use Illuminate\Support\Facades\Blade;
+
+	Blade::component('components.alert', 'alert');
+	Once the component has been aliased, you may render it using a directive:
+
+	@alert(['type' => 'danger'])
+	    You are not allowed to access this resource!
+	@endalert
+	You may omit the component parameters if it has no additional slots:
+
+	@alert
+	    You are not allowed to access this resource!
+	@endalert			
+
+3.  COLLECT: => collect helper to create a new collection instance from the array, 
+		
+		The collect helper returns a new Illuminate\Support\Collection instance for the given array.
+
+		collect($post)->pluck('name');
+
+
+4. is_a($instance, $class)
+
+	To verify that the $instance is of $class.
+
+
+
+
+
+
+

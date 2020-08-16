@@ -1,0 +1,183 @@
+1. Authentication: Authentication means user is a part of some application.
+	 user have credientials. User can login and see the data.
+
+	Authorization : Certain user can perform some action. such as who has created blogpost or comment that user can only delete or update.
+
+
+2. 	There are two primary ways of authorizing actions: gates and policies.
+	
+	Gate : Gates are clousers that have a name that determine if a user is authorized to to perform a given action and are typically defined in the App\Providers/AuthServiceProvider class using Gate facade..
+
+3.	Gates always receive a user instance as their first argument, may optionally receive addition arguments.
+	Gate always recieve currently authenticated user instance.
+
+	To define  Gate in AuthServiceProvider@boot:
+	Gate::define('ability/name', 'closure');
+
+	public function boot()
+	{
+	    $this->registerPolicies();
+
+	 	Gate::define('update-post', function ($user, $post) {
+            return $user->id == $post->user_id; // user table ka id , blogpost table ka reference user_id
+        });
+	}
+
+
+
+	In Controller PostController include,
+
+	use Illuminate\Support\Facades\Gate;
+
+	using gate facade
+	if(Gate::denies('update-post', $post)){
+            abort(403, "You can't edit this blog post!"); //403 means not owner of that blogpost. refuses to authorize it. .
+    }
+
+
+
+ 4. //using authorize helper
+
+    If you would like to attempt to authorize an action and automatically throw an Illuminate\Auth\Access\AuthorizationException if the user is not allowed to perform the given action, you may use the Gate::authorize method. Instances of AuthorizationException are automatically converted to 403 HTTP respons
+
+         // $this->authorize('delete-post', $blogPost);
+
+        Gate::authorize('delete-post', $blogPost);
+
+
+		If you would like to determine if a particular/specific user is authorized to perform an action, you may use the forUser method on the Gate facade:
+
+		Gate::forUser($user)->denies('update-post', $post); //false/ true
+		Gate::forUser($user)->allows('update-post', $post); //false /true
+
+
+		if (Gate::forUser($user)->allows('update-post', $post)) {
+		    // The user can update the post...
+		}
+
+		if (Gate::forUser($user)->denies('update-post', $post)) {
+		    // The user can't update the post...
+		}
+
+5.  Gate::before =>
+	Sometimes, you may wish to grant all abilities to a specific user. You may use the before method to define a callback that is run before all other authorization checks:
+
+
+	//this before mthod will be called first and it returns true, then no other method will be checked, 
+	else all check method eill be called.
+
+	Gate::before(function($user, $ability){
+            if ($user->is_admin) { //It will check for all the ability and assign to admin
+                return true;
+            }
+    });
+
+    //we will check all ability but when individual ability matched with an array that check will assign to admin.all Ability will be compared here.
+    Gate::before(function($user, $ability){
+            if ($user->is_admin && in_array($ability, ['update-post'])) {  
+                return true;
+            }
+    });
+
+
+	If the before callback returns a non-null result that result will be considered the result of the check. 
+
+6. Gate::after =>
+	You may use the after method to define a callback to be executed after all other authorization checks.
+	this will return result
+
+	Gate::after(function ($user, $ability, $result) {
+	    if ($user->is_admin()) {
+	        return true;
+	    }
+	});
+	
+Similar to the before check, if the after callback returns a non-null result that result will be considered the result of the check.
+
+
+--POLICY:
+
+1. define:
+	Policies are classes that organize authorization logic around a particular model or resource. 
+
+	If we have Post model and a corresponding PostPolicy to authorize user actions such as creating or updating posts.
+
+2. create:
+	php artisan make:policy BlogPostPolicy  // will generate an empty policy class.
+	
+	To generate a class with the basic "CRUD" policy methods already included in the class.
+	php artisan make:policy BlogPostPolicy --model=BlogPost
+
+3. use;
+
+		1. 
+		//Check name and instead of closure using policy class@method
+		// Write same check name and method name in PostController
+	    Gate::define('posts.update', 'App\Policies\BlogPostPolicy@update');
+	    Gate::define('posts.delete', 'App\Policies\BlogPostPolicy@delete');
+
+	    In controller ,
+	    $this->authorize('posts.update', $blogPost);
+
+        2.
+        if we not change default method name, 
+        	then no need to write individually like this.
+
+	        Gate::define('posts.update', 'App\Policies\BlogPostPolicy@update');
+		    Gate::define('posts.delete', 'App\Policies\BlogPostPolicy@delete');
+
+		    we can do like
+	    Gate::resource('posts', 'App\Policies\BlogPostPolicy');
+
+	    3.
+		    We can register our policy. During register write model name for specific modelpolicy.
+		    So it will work for same model.  
+
+		    protected $policies = [
+		    	'App\BogPost' => 'App\Policies\BlogPostPolicy',
+			];
+
+			then in controller, write like this
+			$this->authorize('update', $blogPost);
+
+
+			And if we don't change method name in BlogPostPolicy then simply, 
+			I can remove the check name from authorize helper in controller.  
+
+			$this->authorize($blogPost);
+
+		4.  
+			In this, it will search like
+			$this->authorize($blogPost);
+			[
+				'MODEL' => 'POLICYMODEL'
+					index      => viewAny
+			        show       => view
+			        create     => create
+			        store      => create
+			        edit       =>  update
+			        update     => update
+			        destroy    => delete
+			]
+
+		5. only if the user is authorized to perform a given action, then show data.
+			use @can or @cannot directive
+			
+			@can('update', $post)	
+				<a href="{{ route('posts.edit', ['post' =>$post->id]) }}" class="btn btn-primary">Edit</a>
+			@endcan		
+
+		6. Policies are best when we have reesource or model,but not always.	
+
+		7. To protect page using middleware, write can directive with ability name.
+			Same as do same as we do in index.blade.php
+
+			middleware('can:home.secret');
+			middleware('can:update, post');
+
+
+
+
+
+
+

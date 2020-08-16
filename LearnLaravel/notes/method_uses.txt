@@ -1,0 +1,9 @@
+1. pluck(['id']) => To fetch specific column from databse.
+
+
+2. If want to call relationship function in view then call without method parenthesis.
+
+ex:  $post->user()->name => wrong
+	$post->user->name => correct
+
+

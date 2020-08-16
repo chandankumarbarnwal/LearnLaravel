@@ -3,20 +3,65 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\BlogPost;
 use App\Http\Requests\StorePost;
+use Illuminate\Support\Facades\Auth;
+use App\BlogPost;
+use App\Image;
+use App\User;
+use Illuminate\Support\Facades\Cache;
 
+use Illuminate\Support\Facades\Gate;
+
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
+/*
+ Controller Method => Policy Method
+        index      => viewAny
+        show       => view
+        create     => create
+        store      => create
+        edit       =>  update
+        update     => update
+        destroy    => delete
+*/
 
 class PostController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function __construct()
+    {
+        $this->middleware('auth')
+             ->only(['create', 'store', 'edit', 'update', 'destroy']);
+    }
+
+
     public function index()
     {
-        return view('posts.index',['posts' => BlogPost::all()]);
+
+        // $mostCommented = Cache::tags(['blog-post'])->remember('blog-post-commented', 160, function(){
+        //     return BlogPost::mostCommented()->take(5)->get();
+        // });
+
+        //  $mostActive = Cache::remember('users-most-active', 160, function(){
+        //     return User::withMostBlogPosts()->take(5)->get();
+        // });
+
+        //   $mostActiveLastMonth = Cache::remember('users-most-active-last-month', 160, function(){
+        //     return User::withMostBlogPostsLastMonth()->take(5)->get();
+        // });
+
+        return view('posts.index',[
+            // 'posts' => BlogPost::latest()->withCount('comment')->with('user')->with('tags')->get(),
+            'posts' => BlogPost::latestWithRelations()->get()
+
+            // 'mostCommented' => $mostCommented,
+            // 'mostActive' => $mostActive,
+            // 'mostActiveLastMonth' => $mostActiveLastMonth ,
+             // 'posts' => BlogPost::withCount('comment')->orderBy('created_at', 'desc')->get()
+        ]);
+
+        // return view('posts.index',['posts' => BlogPost::all()]);
+
     }
 
     /**
@@ -26,6 +71,7 @@ class PostController extends Controller
      */
     public function create()
     {
+        // $this->authorize('posts.create');
         return view('posts.create');
     }
 
@@ -39,8 +85,36 @@ class PostController extends Controller
     {
         $validatedData = $request->validated();
 
+        // $validatedData['user_id'] = Auth::user()->id; //provide authorize user id
+        $validatedData['user_id'] = $request->user()->id; //provide user id from authorize method
+
         $blogPost = BlogPost::create($validatedData);
 
+        $hasFile = $request->hasFile('thumbnail');
+
+        if($hasFile){
+            // $file = $request->file('thumbnail');
+
+            $path = $request->file('thumbnail')->store('thumbnails');
+            $blogPost->image()->save(
+                Image::create(['path' => $path])
+            );
+
+
+
+            // dump($file->getClientMimeType());
+            // dump($file->getClientOriginalExtension());
+
+            // dump($file->store('thumbnails'));
+            // dump(Storage::disk('public')->putFile('thumbnails', $file));
+
+            // $name1 = $file->storeAs('thumbnail',  $blogPost->id.'.'.$file->guessExtension());
+            // $name2 = Storage::disk('local')->putFileAs('thumbnail', $file, $blogPost->id.'.'. $file->guessExtension());
+
+            // dump(Storage::url($name1));
+            // dump(Storage::disk('local')->url($name2));
+
+        }
 
         // $blogPost = new BlogPost;
         // $blogPost->title = $request->input('title');
@@ -63,8 +137,60 @@ class PostController extends Controller
     public function show(Request $request, $id)
     {
         // $request->session()->reflash();
-       
-        return view('posts.show',['post' => BlogPost::findOrFail($id)]);
+
+        $blogPost = Cache::tags(['blog-post'])->remember("blog-post-{$id}", 60 , function () use($id) {
+
+            return BlogPost::with(['comment', 'tags', 'user', 'comment.user'])->findOrFail($id);
+
+            // return BlogPost::with('comment')->with('tags')->with('user')->findOrFail($id);
+        });
+
+        $sessionId = session()->getId();
+
+        $counterKey = "blog-post-{$id}-counter";  // how many users on the page
+        $usersKey = "blog-post-{$id}-users"; //fetch and store informaton about users
+        $users = Cache::tags(['blog-post'])->get($usersKey, []);
+        $usersUpdate = [];
+        $difference =0;
+        $now = now();
+
+        foreach ($users as $session => $lastVisited) {
+
+            if($now->diffInMinutes($lastVisited) >= 1){
+                $difference--;
+            } else {
+                $usersUpdate[$session] = $lastVisited;
+            }
+        }
+
+        if(
+            !array_key_exists($sessionId, $users)
+            || $now->diffInMinutes($users[$sessionId]) >= 1
+        ){
+                $difference++;
+        }
+
+        $usersUpdate[$sessionId] = $now;
+        Cache::tags(['blog-post'])->forever($usersKey, $usersUpdate);
+
+
+        if (!Cache::tags(['blog-post'])->has($counterKey)) {
+            Cache::tags(['blog-post'])->forever($counterKey, 1);
+        } else {
+            Cache::tags(['blog-post'])->increment($counterKey, $difference);
+        }
+
+        $counter = Cache::tags(['blog-post'])->get($counterKey);
+
+        return view('posts.show',[
+            'post' => $blogPost,
+            'counter'=> $counter
+        ]);
+
+         // return view('posts.show',['post' => BlogPost::with(['comment' => function($query){
+        //     return $query->latest();
+        // }])->findOrFail($id)]);
+
     }
 
     /**
@@ -75,7 +201,17 @@ class PostController extends Controller
      */
     public function edit($id)
     {
-        return view('posts.edit', ['post' => BlogPost::findOrFail($id)]);
+        $post =  BlogPost::findOrFail($id);
+
+        // if(Gate::denies('update-post', $post)){
+        //     abort(403, "You can't edit this blog post!");// this is dynamically will show http response and msg
+        // }
+        $this->authorize($post);
+
+        // Gate::authorize('posts.update', $post); // this is static , by deafult will show http response and msg
+
+
+        return view('posts.edit', ['post' => $post]);
     }
 
     /**
@@ -87,12 +223,35 @@ class PostController extends Controller
      */
     public function update(StorePost $request, $id)
     {
-        $blogPost = BlogPost::findOrFail($id);
+        $post = BlogPost::findOrFail($id);
+
+        // if (Gate::denies('update-post', $post)) {
+        //     abort(403, "You can't edit this blog post!");
+        // }
+        $this->authorize($post);
+
         $validatedData = $request->validated();
-        $blogPost->fill($validatedData);
-        $blogPost->save();
+
+        $post->fill($validatedData);
+
+        if ($request->hasFile('thumbnail')) {
+            $path = $request->file('thumbnail')->store('thumbnails');
+
+            if ($post->image) {
+                Storage::delete($post->image->path);
+                $post->image->path = $path;
+                $post->image->save();
+            } else {
+                $post->image()->save(
+                    Image::create(['path' => $path])
+                );
+            }
+        }
+
+        $post->save();
         $request->session()->flash('status', 'Blog post was updated!');
-        return redirect()->route('posts.show', ['post' => $blogPost->id]);
+
+        return redirect()->route('posts.show', ['post' => $post->id]);
 
     }
 
@@ -104,10 +263,18 @@ class PostController extends Controller
      */
     public function destroy(Request $request, $id)
     {
-        // $blogPost = BlogPost::findOrFail($id);
+
+        $blogPost = BlogPost::findOrFail($id);
+           // $this->authorize('delete-post', $blogPost);
+
+        // $this->authorize('posts.delete', $blogPost);
+        $this->authorize($blogPost);
+        // Gate::authorize('delete-post', $blogPost);
         // $blogPost->delete();
 
-        // BlogPost::destroy($id);
+        BlogPost::destroy($id);
+
+
 
         $request->session()->flash('status',  'Blog post was deleted!');
         return redirect()->route('posts.index');

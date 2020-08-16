@@ -1,0 +1,10 @@
+1. Make file system driver public
+
+	include this line into .env file
+
+
+ FILESYSTEM_DRIVER=public
+
+ 2. to link storage folder to public folder
+
+    php artisan storage:link

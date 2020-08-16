@@ -1,16 +1,12 @@
 @extends('layout')
 
-@section('title')
-	create blogpost
-@endsection
-
 @section('content')
-	<form action="{{ route('posts.store') }}" method="POST">
+	<form action="{{ route('posts.store') }}" method="POST" enctype="multipart/form-data">
 		@csrf
 		
 		@include('posts._form')
 
-		<button type="submit">Create</button>
+		<button type="submit" class="btn btn-primary btn-block">Create</button>
 	</form>
 
 @endsection
