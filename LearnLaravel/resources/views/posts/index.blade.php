@@ -14,15 +14,15 @@
 				@if($post->trashed())
 					<del>
 				@endif
-				
+
 					<a class="{{ $post->trashed() ? 'text-muted':''}}" href="{{ route('posts.show', ['post' =>$post->id]) }}">{{ $post->title }}</a>
 				@if($post->trashed())
 				</del>
-				@endif	
+				@endif
 			</h3>
-			
 
-			@updated(['date' => $post->created_at, 'name' => $post->user->name])
+
+			@updated(['date' => $post->created_at, 'name' => $post->user->name, 'userId' => $post->user->id])
 
 			@endupdated
 
@@ -38,10 +38,10 @@
 
 
 			@auth
-				@can('update', $post)	
+				@can('update', $post)
 					<a href="{{ route('posts.edit', ['post' =>$post->id]) }}" class="btn btn-primary">Edit</a>
-				@endcan	
-			@endauth	
+				@endcan
+			@endauth
 
 	<!-- 	@cannot('delete', $post)
 			<span>You cannot delete</span>
@@ -52,15 +52,15 @@
 	 		@if(!$post->trashed())
 				@can('delete', $post)
 					<form  class="fm-inline" action="{{ route('posts.destroy', ['id' =>$post->id])}}" method="POST">
-						
+
 						@csrf
 						@method('DELETE')
 
 						<input type="submit" name="" value="Delete" class="btn btn-primary">
 					</form>
-				@endcan	
+				@endcan
 			@endif
-		@endauth		
+		@endauth
 
 	    </p>
 
@@ -72,7 +72,7 @@
 
 	<div class="col-4">
 		@include('posts._activity')
-	</div>	
+	</div>
 </div>
 @endsection
 
